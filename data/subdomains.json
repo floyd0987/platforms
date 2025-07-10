@@ -1,0 +1,12 @@
+[
+  {
+    "subdomain": "acme",
+    "emoji": "🚀",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "subdomain": "globex",
+    "emoji": "🧪",
+    "createdAt": "2024-02-15T00:00:00Z"
+  }
+]

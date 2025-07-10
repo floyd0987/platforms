@@ -88,3 +88,40 @@ For custom domains, make sure to:
 
 1. Add your root domain to Vercel
 2. Set up a wildcard DNS record (`*.yourdomain.com`) on Vercel
+
+
+
+
+
+
+
+Laravel API Routes
+In routes/api.php:
+
+php
+Copia
+Modifica
+use Illuminate\Support\Facades\Route;
+use App\Models\Subdomain;
+
+Route::get('/subdomains', function () {
+    return Subdomain::all();
+});
+
+Route::get('/subdomains/{subdomain}', function ($subdomain) {
+    return Subdomain::where('subdomain', $subdomain)->firstOrFail();
+});
+Make sure your Subdomain model looks something like this:
+
+php
+Copia
+Modifica
+// app/Models/Subdomain.php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Subdomain extends Model
+{
+    protected $fillable = ['subdomain', 'emoji'];
+}

@@ -1,61 +1,44 @@
-import { redis } from '@/lib/redis';
-
-export function isValidIcon(str: string) {
-  if (str.length > 10) {
-    return false;
-  }
-
-  try {
-    // Primary validation: Check if the string contains at least one emoji character
-    // This regex pattern matches most emoji Unicode ranges
-    const emojiPattern = /[\p{Emoji}]/u;
-    if (emojiPattern.test(str)) {
-      return true;
-    }
-  } catch (error) {
-    // If the regex fails (e.g., in environments that don't support Unicode property escapes),
-    // fall back to a simpler validation
-    console.warn(
-      'Emoji regex validation failed, using fallback validation',
-      error
-    );
-  }
-
-  // Fallback validation: Check if the string is within a reasonable length
-  // This is less secure but better than no validation
-  return str.length >= 1 && str.length <= 10;
-}
+import subdomains from '@/data/subdomains.json';
 
 type SubdomainData = {
+  subdomain: string;
   emoji: string;
-  createdAt: number;
+  createdAt: string; // ISO date string
 };
 
-export async function getSubdomainData(subdomain: string) {
-  const sanitizedSubdomain = subdomain.toLowerCase().replace(/[^a-z0-9-]/g, '');
-  const data = await redis.get<SubdomainData>(
-    `subdomain:${sanitizedSubdomain}`
-  );
-  return data;
+export function isValidIcon(str: string) {
+  if (str.length > 10) return false;
+  try {
+    return /[\p{Emoji}]/u.test(str);
+  } catch {
+    return str.length >= 1 && str.length <= 10;
+  }
 }
 
-export async function getAllSubdomains() {
-  const keys = await redis.keys('subdomain:*');
+export async function getSubdomainData(subdomain: string): Promise<{
+  emoji: string;
+  createdAt: number;
+} | null> {
+  const sanitized = subdomain.toLowerCase().replace(/[^a-z0-9-]/g, '');
 
-  if (!keys.length) {
-    return [];
-  }
+  const match = (subdomains as SubdomainData[]).find(
+    (item) => item.subdomain === sanitized
+  );
 
-  const values = await redis.mget<SubdomainData[]>(...keys);
+  if (!match) return null;
 
-  return keys.map((key, index) => {
-    const subdomain = key.replace('subdomain:', '');
-    const data = values[index];
+  return {
+    emoji: match.emoji,
+    createdAt: new Date(match.createdAt).getTime()
+  };
+}
 
-    return {
-      subdomain,
-      emoji: data?.emoji || '❓',
-      createdAt: data?.createdAt || Date.now()
-    };
-  });
+export async function getAllSubdomains(): Promise<
+  { subdomain: string; emoji: string; createdAt: number }[]
+> {
+  return (subdomains as SubdomainData[]).map((item) => ({
+    subdomain: item.subdomain,
+    emoji: item.emoji,
+    createdAt: new Date(item.createdAt).getTime()
+  }));
 }
